@@ -1,0 +1,415 @@
+app:
+  description: 第9周作业-deepresearch-乞强
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  icon_type: emoji
+  mode: workflow
+  name: deepresearch-QQ
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/tongyi:0.2.21@d467c6df6876dc5e70ad0b10c14631656ebbc904347eadf48e95b4fca7eda001
+    version: null
+kind: app
+version: 0.6.0
+workflow:
+  conversation_variables: []
+  environment_variables:
+  - description: ''
+    id: d5895d0e-38ce-4bc7-af84-ef2806be3b81
+    name: BOCHA_SEARCH_COUNT
+    selector:
+    - env
+    - BOCHA_SEARCH_COUNT
+    value: '10'
+    value_type: string
+  - description: ''
+    id: 97cb860e-897d-4667-899c-8d23acb52e48
+    name: ContentType
+    selector:
+    - env
+    - ContentType
+    value: application/json
+    value_type: string
+  - description: ''
+    id: e4e97fad-6a13-4f8b-816a-bac875ba678c
+    name: Authorization
+    selector:
+    - env
+    - Authorization
+    value: Bearer sk-3d2293ad83aa4823a7c7ce8dd5ff8c72
+    value_type: string
+  - description: ''
+    id: 21db21e5-5564-4e96-b6fe-aee05abfd1b5
+    name: url
+    selector:
+    - env
+    - url
+    value: https://api.bocha.cn/v1/web-search
+    value_type: string
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        attachment_image_file_size_limit: 2
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        file_upload_limit: 20
+        image_file_batch_limit: 10
+        image_file_size_limit: 10
+        single_chunk_attachment_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: llm
+      id: 1789574281549-source-1789574289713-target
+      source: '1789574281549'
+      sourceHandle: source
+      target: '1789574289713'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: iteration
+      id: 1789574289713-source-1789655707636-target
+      source: '1789574289713'
+      sourceHandle: source
+      target: '1789655707636'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: iteration
+        targetType: end
+      id: 1789655707636-source-1789656145274-target
+      source: '1789655707636'
+      sourceHandle: source
+      target: '1789656145274'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: true
+        isInLoop: false
+        iteration_id: '1789655707636'
+        sourceType: iteration-start
+        targetType: http-request
+      id: 1789655707636start-source-1789655962861-target
+      source: 1789655707636start
+      sourceHandle: source
+      target: '1789655962861'
+      targetHandle: target
+      type: custom
+      zIndex: 1002
+    - data:
+        isInIteration: true
+        isInLoop: false
+        iteration_id: '1789655707636'
+        sourceType: http-request
+        targetType: code
+      id: 1789655962861-source-1789657677574-target
+      selected: false
+      source: '1789655962861'
+      sourceHandle: source
+      target: '1789657677574'
+      targetHandle: target
+      type: custom
+      zIndex: 1002
+    nodes:
+    - data:
+        selected: false
+        title: 用户输入QQ
+        type: start
+        variables:
+        - default: ''
+          hint: ''
+          label: text
+          max_length: 200
+          options: []
+          placeholder: ''
+          required: true
+          type: text-input
+          variable: text
+      height: 109
+      id: '1789574281549'
+      position:
+        x: 29.98135330515686
+        y: 178.93127347729293
+      positionAbsolute:
+        x: 29.98135330515686
+        y: 178.93127347729293
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1789574281549'
+          - text
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: deepseek-v4.1-flash
+          provider: langgenius/tongyi/tongyi
+        prompt_template:
+        - id: 64ac1622-f38a-4d38-97e9-17f03de953b8
+          role: system
+          text: '任务：将用户输入的问题{{#1789574281549.text#}}拆分为3~5个不同维度的子问题。 约束： 1. 每个子问题15字以内，只提问，不回答；
+            2. 禁止输出任何解释、前言、markdown、多余文字； 3. 禁止输出标签和思考过程； 4. 输出必须严格是下面格式的JSON对象，不要别的内容：
+            {"question_list": ["子问题1","子问题2","子问题3"]}'
+        selected: false
+        structured_output:
+          schema:
+            additionalProperties: false
+            properties:
+              question_list:
+                description: 拆解的子问题存储到这个字符串数组中
+                items:
+                  type: string
+                type: array
+            required: []
+            type: object
+        structured_output_enabled: true
+        title: 问题拆解LLM
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1789574289713'
+      position:
+        x: 29.98135330515686
+        y: 343.92434729578076
+      positionAbsolute:
+        x: 29.98135330515686
+        y: 343.92434729578076
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        error_handle_mode: terminated
+        flatten_output: true
+        height: 225
+        is_parallel: false
+        iterator_input_type: object
+        iterator_selector:
+        - '1789574289713'
+        - structured_output
+        - question_list
+        output_selector:
+        - '1789657677574'
+        - results
+        output_type: array[object]
+        parallel_nums: 10
+        selected: false
+        start_node_id: 1789655707636start
+        title: 迭代QQ
+        type: iteration
+        width: 688
+      height: 225
+      id: '1789655707636'
+      position:
+        x: 20.843014474669587
+        y: 504.4465153896117
+      positionAbsolute:
+        x: 20.843014474669587
+        y: 504.4465153896117
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 688
+      zIndex: 1
+    - data:
+        desc: ''
+        isInIteration: true
+        selected: false
+        title: ''
+        type: iteration-start
+      draggable: false
+      height: 48
+      id: 1789655707636start
+      parentId: '1789655707636'
+      position:
+        x: 24
+        y: 68
+      positionAbsolute:
+        x: 44.84301447466959
+        y: 572.4465153896117
+      selectable: false
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom-iteration-start
+      width: 44
+      zIndex: 1002
+    - data:
+        authorization:
+          config: null
+          type: no-auth
+        body:
+          data:
+          - id: key-value-78
+            key: ''
+            type: text
+            value: '{"query":{{#1789655707636.item#}},"summary":true,"count":10}'
+          type: json
+        headers: 'Authorization:{{#env.Authorization#}}
+
+          Content-Type:{{#env.ContentType#}}'
+        isInIteration: true
+        isInLoop: false
+        iteration_id: '1789655707636'
+        method: post
+        params: ''
+        retry_config:
+          max_retries: 3
+          retry_enabled: true
+          retry_interval: 100
+        selected: false
+        ssl_verify: true
+        timeout:
+          max_connect_timeout: 0
+          max_read_timeout: 0
+          max_write_timeout: 0
+        title: HTTP请求QQ
+        type: http-request
+        url: '{{#env.url#}}'
+        variables: []
+      height: 125
+      id: '1789655962861'
+      parentId: '1789655707636'
+      position:
+        x: 140.12573253208313
+        y: 65
+      positionAbsolute:
+        x: 160.96874700675272
+        y: 569.4465153896117
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 1002
+    - data:
+        outputs:
+        - value_selector:
+          - '1789655707636'
+          - output
+          value_type: array[object]
+          variable: result
+        selected: false
+        title: 输出
+        type: end
+      height: 88
+      id: '1789656145274'
+      position:
+        x: 360.2553068089061
+        y: 811.8861813685518
+      positionAbsolute:
+        x: 360.2553068089061
+        y: 811.8861813685518
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        code: "def main(resp: str) -> list[dict]:\n    data = json.loads(resp)\n \
+          \   if data.get(\"code\") == 200:\n        pages = data.get(\"data\", {}).get(\"\
+          webPages\", {}).get(\"value\", [])\n        results = []\n        for p\
+          \ in pages:\n            snippet = (p.get(\"snippet\") or p.get(\"summary\"\
+          ) or \"\")[:500]\n            results.append(\n                {\n     \
+          \               \"title\": p.get(\"name\"),\n                    \"url\"\
+          : p.get(\"url\"),\n                    \"snippet\": snippet,\n         \
+          \           \"site_name\": p.get(\"siteName\"),\n                    \"\
+          date\": p.get(\"datePublished\") or p.get(\"dateLastCrawled\"),\n      \
+          \          }\n            )\n        return {\"results\":results}"
+        code_language: python3
+        isInIteration: true
+        isInLoop: false
+        iteration_id: '1789655707636'
+        outputs:
+          results:
+            children: null
+            type: array[object]
+        selected: false
+        title: 代码执行
+        type: code
+        variables:
+        - value_selector:
+          - '1789655962861'
+          - body
+          value_type: string
+          variable: resp
+      height: 52
+      id: '1789657677574'
+      parentId: '1789655707636'
+      position:
+        x: 425.45285030046875
+        y: 65
+      positionAbsolute:
+        x: 446.29586477513834
+        y: 569.4465153896117
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 1002
+    viewport:
+      x: 101.98990778210606
+      y: -161.17429351850404
+      zoom: 0.6597539553864471
+  rag_pipeline_variables: []
