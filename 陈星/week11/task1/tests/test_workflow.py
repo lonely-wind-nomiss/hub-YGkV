@@ -59,8 +59,8 @@ def test_rewrite_path(workflow: SQLAgentWorkflow, monkeypatch) -> None:
     outputs = [
         TableSelection(tables=["albums"], reason="统计专辑数量", confidence=0.9),
         SQLDraft(sql="SELECT COUNT(ArtistId FROM albums", explanation="bad"),
-        SQLDraft(sql="SELECT COUNT(ArtistId) AS n FROM albums", explanation="fixed"),
-        FinalAnswer(answer="共有 275 位艺人。", evidence=["275"]),
+        SQLDraft(sql="SELECT COUNT(DISTINCT ArtistId) AS n FROM albums", explanation="fixed"),
+        FinalAnswer(answer="共有 204 位不同艺人。", evidence=["204"]),
     ]
     _patch_runner(monkeypatch, outputs)
 
@@ -68,7 +68,8 @@ def test_rewrite_path(workflow: SQLAgentWorkflow, monkeypatch) -> None:
 
     assert result.repair_attempts == 1
     assert result.error is None
-    assert "COUNT(ArtistId)" in (result.sql or "")
+    assert "COUNT(DISTINCT ArtistId)" in (result.sql or "")
+    assert result.answer == "共有 204 位不同艺人。"
 
 
 def test_empty_result_skips_summary_agent(workflow: SQLAgentWorkflow, monkeypatch) -> None:

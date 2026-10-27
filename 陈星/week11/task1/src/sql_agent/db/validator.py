@@ -130,6 +130,15 @@ class SQLValidator:
                 normalized_sql=sql,
             )
 
+        # SELECT 本身不意味着安全，拒绝具有管理或外部副作用的函数。
+        if re.search(r"\b(?:load_extension|writefile|readfile)\s*\(", masked, re.I):
+            return ValidationResult(
+                ok=False,
+                code=ErrorCode.UNSAFE,
+                message="禁止具有文件访问或扩展加载能力的 SQL 函数",
+                normalized_sql=sql,
+            )
+
         for keyword in FORBIDDEN_KEYWORDS:
             if re.search(rf"\b{keyword}\b", masked, re.IGNORECASE):
                 return ValidationResult(
