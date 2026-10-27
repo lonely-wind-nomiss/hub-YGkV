@@ -30,6 +30,17 @@ def _to_text(value: object, max_chars: int) -> str:
     return text if len(text) <= max_chars else text[:max_chars] + "..."
 
 
+# 仅允许常见的只读聚合、文本、日期函数。
+# 限定函数并非完整沙箱；生产环境仍需隔离进程及资源配额。
+ALLOWED_SQL_FUNCTIONS = {
+    "count", "sum", "avg", "min", "max", "total", "round", "abs",
+    "lower", "upper", "length", "substr", "substring", "coalesce",
+    "ifnull", "nullif", "group_concat", "date", "time", "datetime",
+    "strftime", "julianday", "unixepoch", "like", "glob", "trim",
+    "ltrim", "rtrim", "replace", "instr", "typeof", "printf", "iif",
+}
+
+
 class SQLExecutor:
     def __init__(
         self,
@@ -57,6 +68,24 @@ class SQLExecutor:
 
         try:
             conn.execute("PRAGMA query_only = ON")
+            conn.enable_load_extension(False)
+
+            actions = {sqlite3.SQLITE_SELECT, sqlite3.SQLITE_READ,
+                       sqlite3.SQLITE_FUNCTION}
+            if hasattr(sqlite3, "SQLITE_RECURSIVE"):
+                actions.add(sqlite3.SQLITE_RECURSIVE)
+
+            def authorizer(action, arg1, arg2, db_name, source):
+                if action not in actions:
+                    return sqlite3.SQLITE_DENY
+                if action == sqlite3.SQLITE_FUNCTION:
+                    if str(arg2 or "").lower() not in ALLOWED_SQL_FUNCTIONS:
+                        return sqlite3.SQLITE_DENY
+                if action == sqlite3.SQLITE_READ and db_name not in ("main", None):
+                    return sqlite3.SQLITE_DENY
+                return sqlite3.SQLITE_OK
+
+            conn.set_authorizer(authorizer)
             conn.set_progress_handler(progress_handler, 1000)
             cursor = conn.execute(sql)
             columns = [item[0] for item in (cursor.description or [])]

@@ -253,6 +253,48 @@ class SchemaCatalog:
             if fk.constrained_table in selected and fk.referred_table in selected
         ]
 
+    def complete_join_tables(self, tables: list[str]) -> list[str]:
+        """根据已声明外键补全 JOIN 中间表，避免让模型凭空猜表。
+
+        对于多个目标表，按顺序从已连通的表集合寻找最短路径；
+        它是确定性的贪心方案，不保证全局最优或业务语义正确。
+        """
+        from collections import deque
+
+        if any(name not in self.table_names for name in tables):
+            raise ValueError("选表结果包含数据库中不存在的表")
+        if not tables:
+            return []
+
+        adjacency = {name: set() for name in self.table_names}
+        for fk in self.foreign_keys:
+            left, right = fk.constrained_table, fk.referred_table
+            if left in adjacency and right in adjacency:
+                adjacency[left].add(right)
+                adjacency[right].add(left)
+
+        included = {tables[0]}
+        for target in tables[1:]:
+            if target in included:
+                continue
+            queue = deque([[node] for node in sorted(included)])
+            visited = set(included)
+            selected_path = None
+            while queue:
+                path = queue.popleft()
+                node = path[-1]
+                if node == target:
+                    selected_path = path
+                    break
+                for neighbor in sorted(adjacency[node]):
+                    if neighbor not in visited:
+                        visited.add(neighbor)
+                        queue.append(path + [neighbor])
+            if selected_path is None:
+                raise ValueError(f"找不到连接表 {target} 的外键路径")
+            included.update(selected_path)
+        return sorted(included)
+
     def is_connected(self, tables: list[str]) -> bool:
         if len(tables) <= 1:
             return True

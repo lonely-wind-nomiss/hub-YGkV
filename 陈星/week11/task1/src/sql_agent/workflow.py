@@ -20,6 +20,7 @@ from .db.executor import SQLExecutionError, SQLExecutor
 from .db.validator import SQLValidator
 from .models import (
     ExecutionResult,
+    ErrorCode,
     FinalAnswer,
     QueryState,
     SQLAttempt,
@@ -111,7 +112,13 @@ class SQLAgentWorkflow:
                 tables=selection.tables,
             )
 
-        tables = selection.tables
+        tables = self.catalog.complete_join_tables(selection.tables)
+        if set(tables) != set(selection.tables):
+            logger.info(
+                "stage=join_completion initial=%s completed=%s",
+                selection.tables,
+                tables,
+            )
         state.schema_context = self.catalog.render_schema(tables)
         logger.info(
             "stage=table_selected tables=%s schema_chars=%d reason=%s",
@@ -170,6 +177,17 @@ class SQLAgentWorkflow:
             state.validation = validation
             state.attempts[-1].code = validation.code
             state.attempts[-1].error = validation.message
+
+            # 权限类错误是拒绝执行，而不是不断要求 LLM 绕过安全门禁。
+            if validation.code == ErrorCode.UNSAFE:
+                return WorkflowOutput(
+                    question=question,
+                    answer="SQL 不符合只读安全策略，已拒绝执行。",
+                    sql=sql,
+                    tables=tables,
+                    repair_attempts=state.repair_attempts,
+                    error=validation.message,
+                )
 
             if repair_index >= self.max_repair_attempts:
                 logger.warning(
@@ -323,8 +341,10 @@ class SQLAgentWorkflow:
                 f"可选表：{', '.join(self.catalog.table_names)}"
             ]
 
-        if not self.catalog.is_connected(tables):
-            return ["所选表之间没有外键连接，请重新选择可以 JOIN 的表"]
+        try:
+            self.catalog.complete_join_tables(tables)
+        except ValueError as exc:
+            return [str(exc)]
         return []
 
     async def _generate_sql(self, question: str, schema: str) -> SQLDraft:
